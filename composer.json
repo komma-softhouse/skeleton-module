@@ -20,7 +20,7 @@
         }
     },
     "require": {
-        "codeat3/blade-phosphor-icons": "*"
+        "codeat3/blade-phosphor-icons": "^2.3"
     },
     "autoload": {
         "psr-4": {
