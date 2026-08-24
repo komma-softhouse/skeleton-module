@@ -1,6 +1,6 @@
 # Skeleton Module
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/e2tmk/skeleton-module.svg?style=flat-square)](https://packagist.org/packages/e2tmk/skeleton-module)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/komma-softhouse/skeleton-module.svg?style=flat-square)](https://packagist.org/packages/komma-softhouse/skeleton-module)
 
 
 The Skeleton module serves as a template for creating new modules in the system. It provides a streamlined structure and a convenient command-line tool to quickly generate new modules based on this skeleton.
@@ -10,14 +10,14 @@ The Skeleton module serves as a template for creating new modules in the system.
 You can install the package via composer:
 
 ```bash
-composer require e2tmk/skeleton-module
+composer require komma-softhouse/skeleton-module
 ```
 
 ## Requirements
 
-- PHP >= 8.2
-- Laravel >= 11.0
-- nwidart/laravel-modules >= 9.0
+- PHP >= 8.4
+- Laravel >= 13.0
+- nwidart/laravel-modules >= 10.0
 
 ## Module Structure
 
