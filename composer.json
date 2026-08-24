@@ -1,34 +1,56 @@
 {
-    "name": "komma-softhouse/skeleton-module",
-    "description": "",
-    "type": "laravel-module",
+    "name": "komma-softhouse/skeleton-plugin",
+    "description": "🚀 Skeleton template for building Filament 5.x plugins | Komma SoftHouse plugin standard",
+    "keywords": ["komma-softhouse", "qbit-dynamics","e2tmk", "laravel", "filament", "filamentphp-5", "filament-plugin", "skeleton"],
+    "homepage": "https://github.com/komma-softhouse/skeleton-plugin",
     "license": "MIT",
     "authors": [
         {
             "name": "Elias Olivtradet",
-            "email": "elias.olivtradet@kommasofthouse.com"
+            "role": "Developer"
         }
     ],
-    "extra": {
-        "laravel": {
-            "providers": [],
-            "aliases": {}
-        }
-    },
     "require": {
-        "codeat3/blade-phosphor-icons": "*"
+        "php": "^8.4",
+        "filament/filament": "^5.7",
+        "spatie/laravel-package-tools": "^1.16",
+        "illuminate/contracts": "^13.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.14",
+        "nunomaduro/collision": "^8.0",
+        "orchestra/testbench": "^11.0",
+        "pestphp/pest": "^4.0",
+        "pestphp/pest-plugin-laravel": "^4.0"
     },
     "autoload": {
         "psr-4": {
-            "Modules\\Skeleton\\": "app/",
-            "Modules\\Skeleton\\Database\\Factories\\": "database/factories/",
-            "Modules\\Skeleton\\Database\\Seeders\\": "database/seeders/"
+            "Komma\\SkeletonPlugin\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Modules\\Skeleton\\Tests\\": "tests/"
+            "Komma\\SkeletonPlugin\\Tests\\": "tests/"
         }
     },
-    "repositories": {}
+    "scripts": {
+        "test": "vendor/bin/pest",
+        "format": "vendor/bin/pint",
+        "format:test": "vendor/bin/pint --test"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Komma\\SkeletonPlugin\\SkeletonPluginServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }

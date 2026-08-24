@@ -1,21 +1,30 @@
-name: Tests
+name: tests
 
 on:
+  push:
+    branches: [main]
   pull_request:
-  workflow_call:
-  workflow_dispatch:
 
 jobs:
-
-  just-pass:
+  tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.4']
     steps:
-      - run: echo "Just pass"
+      - uses: actions/checkout@v4
 
-  pest-tests:
-    if: false
-    uses: ./.github/workflows/run-pest-tests.yml
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, zip, intl, bcmath
+          coverage: none
 
-  e2e-tests:
-    if: false
-    uses: ./.github/workflows/run-e2e-tests.yml
+      - name: Install dependencies
+        run: composer update --prefer-dist --no-interaction --no-progress
+
+      - name: Check code style
+        run: composer format:test
+
+      - name: Run tests
+        run: composer test

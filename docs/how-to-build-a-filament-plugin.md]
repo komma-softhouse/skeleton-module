@@ -1,0 +1,117 @@
+# How to Build a Filament Plugin — Komma SoftHouse Standard
+
+The reference for every redistributable Filament 5.x plugin in the Komma ecosystem (Verifactu, TicketBAI drivers, Print Agent SDK, and everything that follows). Internal app modules have their own standard and are **out of scope** here: this document covers only Composer packages installed into third-party Laravel apps.
+
+Grounded in the official Filament 5.x docs — read them once before your first plugin:
+[Getting started](https://filamentphp.com/docs/5.x/plugins/getting-started) ·
+[Panel plugins](https://filamentphp.com/docs/5.x/plugins/panel-plugins) ·
+[Building a panel plugin](https://filamentphp.com/docs/5.x/plugins/building-a-panel-plugin) ·
+[Building a standalone plugin](https://filamentphp.com/docs/5.x/plugins/building-a-standalone-plugin) ·
+[Configurable resources and pages](https://filamentphp.com/docs/5.x/plugins/configurable-resources-and-pages)
+
+---
+
+## 1. The two plugin contexts
+
+- **Panel plugin** — adds resources, pages, widgets or whole features to a panel. Uses the `Plugin` object. Most Komma products are this.
+- **Standalone plugin** — adds form fields, table columns, schema components usable outside panels. **No `Plugin` object**: all configuration lives in the service provider.
+
+One package may be both. When in doubt, ship the `Plugin` object and keep standalone pieces registered in the provider.
+
+## 2. Bootstrapping — always from the skeleton
+
+1. GitHub → `komma-softhouse/skeleton-plugin` → **Use this template**.
+2. `php ./configure.php` → answer prompts → the script renames everything and deletes itself.
+3. `composer install && composer test` → green before writing a line.
+
+Never hand-roll the package layer. The skeleton already encodes: spatie/laravel-package-tools provider, PHP 8.4 / Laravel 13 / Filament 5 constraints, Pest + Testbench, Pint, CI, MIT scaffold.
+
+## 3. The package layer
+
+- Service provider extends `Spatie\LaravelPackageTools\PackageServiceProvider` with a **static `$name`** (kebab-case). That name is the config file name, the views/translations namespace, and must match `Plugin::getId()`.
+- Declare only what you ship: `hasConfigFile()`, `hasViews()`, `hasTranslations()`, `hasMigrations([...])`, `hasCommands([...])`.
+- Composer package naming: `{vendor}/filament-{plugin}` (e.g. `komma-softhouse/filament-verifactu`). Namespace: `Komma\{Plugin}`.
+
+## 4. The Plugin object
+
+Required trio: `getId()` (unique, kebab), `register(Panel $panel)` (resources / pages / widgets / render hooks — runs after the host configured the plugin, so read your toggles here), `boot(Panel $panel)` (runs only when that panel is in use).
+
+House additions, always:
+
+```php
+public static function make(): static
+{
+    return app(static::class);            // container-resolved: host can swap it
+}
+
+public static function get(): static
+{
+    return filament(app(static::class)->getId());   // typed access to the configured instance
+}
+```
+
+### Per-option configuration
+
+One **setter + getter pair per option**, setter returns `static`:
+
+```php
+->gotenbergPdf() / hasGotenbergPdf()
+->escPos()       / hasEscPos()
+```
+
+Rules:
+- **Every toggle ships `false`.** A host that enables nothing gets zero extra dependencies, zero extra UI, zero surprises. Infrastructure (Docker, Gotenberg, print agents, AI providers) is always opt-in.
+- Mirror each fluent toggle with a config key (`config/{name}.php` + env var) so non-panel contexts (jobs, CLI) can read the same switch.
+- Conditional registrations (`if ($this->hasX())`) live inside `register()`.
+
+## 5. Configurable resources and pages (v5)
+
+When a resource must be registrable N times with different behavior (e.g. "Active" vs "Archived"), do **not** clone resource classes:
+
+1. Create a configuration class extending `Filament\Resources\ResourceConfiguration` (or `PageConfiguration`) with the fluent setter/getter pairs.
+2. Point the resource at it: `protected static ?string $configurationClass = XConfiguration::class;`
+3. Register with keys: `XResource::make('active')->...`, `XResource::make('archived')->archived()`.
+4. Read at runtime with `static::getConfiguration()` / `static::hasConfiguration()`; URLs via `XResource::getUrl(..., configuration: 'archived')`.
+
+Expose the configurations to hosts through a plugin setter that stores an array and spreads it inside `register()`.
+
+## 6. Assets
+
+- On-demand assets (async Alpine components, lazy CSS) → `FilamentAsset::register()` in the provider's `packageBooted()`, with `package: '{vendor}/{package}'`.
+- Assets that must load on **every page of a panel** → `$panel->assets()` inside `Plugin::register()`. Registering these in `packageBooted()` leaks them into every panel of the host app — never do it.
+- Prefer no CSS at all: hosts style plugins through their own Filament theme.
+
+## 7. Filament 5 code conventions (Komma)
+
+- Layout components from `Filament\Schemas\Components` (Section, Grid, Tabs); actions from `Filament\Actions`; form signature `form(Schema $schema): Schema`; reactivity with `->live()`.
+- `Section->columnSpanFull()` with an inner `Grid` for multi-column layouts.
+- Separate classes per concern: Form / Table / Infolist / Pages — no god-resources.
+- Read-only data (fiscal records, audit trails) → resources with **list + view only**; `create/update/delete` policies return `false`; model guards throw on mutation.
+- Money: **bcmath end to end, never `round()`**.
+- i18n: `__('English literal')` with JSON lang files (`resources/lang/es.json`, …). `en.json` stays `{}` — the literals are the English.
+- External engines (josemmo, barnetik clones, …) stay behind a Komma contract; **product code never imports vendor classes**.
+
+## 8. Testing & CI
+
+- Pest on Testbench; the skeleton's `TestCase` already boots the full Filament 5 provider set.
+- Minimum bar per plugin: plugin id, toggles-off-by-default, each fluent option, each conditional registration, policies of read-only resources.
+- CI (shipped): Pint `--test` + Pest on PHP 8.4. Red CI never tags.
+- Products with a regulatory surface add their own release gate on top (e.g. the Verifactu homologation battery) — vendor-clone updates re-run it entirely.
+
+## 9. Repo, release & distribution
+
+- Commits, PR titles and bodies, and all git artifacts: **English**. Conventional, imperative commit subjects.
+- SemVer + `CHANGELOG.md`. The version must be traceable from anything the plugin emits (e.g. `ComputerSystem` in fiscal records).
+- License per product: MIT for skeletons/OSS, commercial license (Anystack / Filament marketplace) for paid plugins. Cloned-engine licensing is handled at company level — not in the plugin repo.
+- README must contain: requirements, install, the exact `->plugin(X::make())` snippet, every fluent option, and publishable assets.
+
+## 10. Checklist before the first tag
+
+- [ ] Bootstrapped from `skeleton-plugin` via `configure.php`
+- [ ] `Plugin::getId()` === provider `$name` === config file name
+- [ ] `make()` + `get()` present; every option has setter + getter; **all toggles default off**
+- [ ] Assets follow §6 (nothing leaking into foreign panels)
+- [ ] v5 conventions of §7 (namespaces, Schema signature, bcmath, i18n literals)
+- [ ] No vendor-engine class imported outside its contract
+- [ ] Pest green, Pint clean, CI green
+- [ ] README + CHANGELOG + license correct for the product type
