@@ -1,16 +1,12 @@
 {
-    "name": "e2tmk/skeleton-module",
+    "name": "komma-softhouse/skeleton-module",
     "description": "",
     "type": "laravel-module",
     "license": "MIT",
     "authors": [
         {
-            "name": "André Felipe Domingues Stroppa",
-            "email": "andre.domingues@e2tmk.com"
-        },
-        {
             "name": "Elias Olivtradet",
-            "email": "elias.olivtradet@e2tmk.com"
+            "email": "elias.olivtradet@kommasofthouse.com"
         }
     ],
     "extra": {
@@ -20,7 +16,7 @@
         }
     },
     "require": {
-        "codeat3/blade-phosphor-icons": "^2.3"
+        "codeat3/blade-phosphor-icons": "*"
     },
     "autoload": {
         "psr-4": {
